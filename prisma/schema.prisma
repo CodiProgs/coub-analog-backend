@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  nickname String @unique
+  email    String
+  name     String
+
+  description String?
+  password    String?
+  avatar      String  @default("/avatars/default.jpg")
+
+  provider Provider @default(LOCAL)
+  role     UserRole @default(USER)
+
+  coubs Coub[]
+  like  Like[]
+
+  @@unique([email, provider])
+  @@map("user")
+}
+
+model Coub {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  title String
+  url   String
+
+  views Int @default(0)
+
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  communityId String    @map("community_id")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+
+  likes Like[]
+
+  @@map("coub")
+}
+
+model Community {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  name   String @unique
+  avatar String
+
+  coubs Coub[]
+
+  @@map("community")
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userId String @map("user_id")
+  coubId String @map("coub_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coub Coub @relation(fields: [coubId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, coubId])
+  @@map("like")
+}
+
+enum Provider {
+  LOCAL
+  GOOGLE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}

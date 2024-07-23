@@ -1,0 +1,86 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input AuthDto {
+  email: String!
+  password: String!
+}
+
+type AuthType {
+  accessToken: String!
+  user: UserType!
+}
+
+input CommunityDto {
+  avatar: String!
+  name: String!
+}
+
+type CommunityType {
+  avatar: String!
+  id: String!
+  name: String!
+}
+
+type CoubType {
+  community: CommunityType!
+  id: String!
+  likes: [LikeType!]
+  title: String!
+  url: String!
+  user: UserType!
+  views: Float!
+}
+
+type LikeType {
+  coub: CoubType!
+  id: String!
+  user: UserType!
+}
+
+type Mutation {
+  auth(input: AuthDto!): AuthType!
+  createCommunity(input: CommunityDto!): CommunityType!
+  deleteCommunity(id: String!): CommunityType!
+  deleteUser: UserType!
+  getNewToken: String!
+  logout: Boolean!
+  updateCommunity(id: String!, input: CommunityDto!): CommunityType!
+  updateEmail(email: String!): UserType!
+  updatePassword(password: String!): UserType!
+  updateUser(input: UserDto!): UserType!
+  uploadFile(file: Upload!): Boolean!
+}
+
+type Query {
+  communities: [CommunityType!]!
+  community(id: String!): CommunityType
+  user(nickname: String!): UserType
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+input UserDto {
+  description: String
+  name: String!
+  nickname: String!
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+type UserType {
+  avatar: String!
+  coubs: [CoubType!]
+  description: String
+  email: String!
+  id: String!
+  likes: [LikeType!]
+  name: String!
+  nickname: String!
+  role: UserRole!
+}
