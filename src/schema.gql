@@ -22,6 +22,12 @@ type CommunityType {
   name: String!
 }
 
+input CoubDto {
+  communityId: String!
+  title: String!
+  userId: String!
+}
+
 type CoubType {
   community: CommunityType!
   createdAt: DateTime!
@@ -31,6 +37,13 @@ type CoubType {
   url: String!
   user: UserType!
   views: Float!
+}
+
+type CoubsType {
+  coubs: [CoubType]
+  queryNumber: Float!
+  skip: Float!
+  take: Float!
 }
 
 """
@@ -47,12 +60,16 @@ type LikeType {
 type Mutation {
   auth(input: AuthDto!): AuthType!
   createCommunity(avatar: Upload!, input: CommunityDto!): CommunityType!
+  createCoub(input: CoubDto!, video: Upload!): CoubType!
   deleteCommunity(id: String!): CommunityType!
+  deleteCoub(id: String!): CoubType!
   deleteUser: UserType!
   getNewToken: String!
   logout: Boolean!
+  toggleLike(coubId: String!): Boolean!
   updateAvatar(avatar: Upload!): UserType!
   updateCommunity(avatar: Upload, id: String!, input: CommunityDto!): CommunityType!
+  updateCoub(id: String!, input: CoubDto!, video: Upload): CoubType!
   updateEmail(email: String!): UserType!
   updatePassword(password: String!): UserType!
   updateUser(input: UserDto!): UserType!
@@ -61,7 +78,9 @@ type Mutation {
 type Query {
   communities: [CommunityType!]!
   community: CommunityType!
-  coubs(skip: Float, take: Float): [CoubType]
+  coub(id: String!): CoubType
+  coubs(queryNumber: Float, skip: Float, take: Float): CoubsType!
+  likes: UserType
   user(nickname: String!): UserType
 }
 

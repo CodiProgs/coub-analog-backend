@@ -19,6 +19,12 @@ export class UserResolver {
 	}
 
 	@Auth()
+	@Query(() => UserType, { nullable: true })
+	async likes(@CurrentUser('id') id: string) {
+		return this.userService.getLikes(id)
+	}
+
+	@Auth()
 	@Mutation(() => UserType)
 	async updateUser(@CurrentUser('id') id: string, @Args('input') dto: UserDto) {
 		return this.userService.update(id, dto)

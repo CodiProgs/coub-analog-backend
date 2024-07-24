@@ -24,7 +24,7 @@ model User {
   role     UserRole @default(USER)
 
   coubs Coub[]
-  like  Like[]
+  likes Like[]
 
   @@unique([email, provider])
   @@map("user")

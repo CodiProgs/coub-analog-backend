@@ -29,6 +29,36 @@ export class UserService {
 		})
 	}
 
+	// add search params -> orderBy (createdAt {news, olds}, likes, views, random)
+	async getLikes(id: string) {
+		const user = await this.prisma.user.findUnique({
+			where: { id },
+			include: {
+				likes: {
+					orderBy: {
+						coub: {
+							createdAt: 'desc'
+						}
+					},
+					include: {
+						coub: {
+							include: {
+								community: true,
+								likes: {
+									include: {
+										user: true
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		})
+
+		return user
+	}
+
 	async create(dto: AuthDto) {
 		const { uuid, name } = this.generateUserData(dto.email)
 

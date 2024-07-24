@@ -42,7 +42,7 @@ export class CommunityService {
 			},
 			data: {
 				...dto,
-				avatar: avatarPath || undefined
+				avatar: avatarPath || undefined // check this so that the avatar is not replaced
 			}
 		})
 	}

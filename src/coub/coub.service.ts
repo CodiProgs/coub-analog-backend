@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { CommunityService } from 'src/community/community.service'
 import { PrismaService } from 'src/prisma.service'
-import { CoubType } from './type/coub.type'
+import { CoubsType } from './type/coubs.type'
+import { CoubDto } from './dto/coub.dto'
 
 @Injectable()
 export class CoubService {
@@ -10,39 +11,98 @@ export class CoubService {
 		private communityService: CommunityService
 	) {}
 
-	async getAll(skip: number = 0, take: number = 10) {
-		// : Promise<CoubType[]>
-		const array = [
-			'1',
-			'2',
-			'3',
-			'4',
-			'5',
-			'6',
-			'7',
-			'8',
-			'9',
-			'10',
-			'11',
-			'12'
-		]
+	async getAll(
+		skip: number = 0,
+		take: number = 10,
+		queryNumber: number = 0
+		// timePeriod: 'day' | 'week' | 'month' | 'year' | 'all' = 'week',
+		// orderBy: 'createdAt' | 'likes' | 'views' = 'views'
+	): Promise<CoubsType> {
+		// вынести в отдельную функцию типа -> search
+		const communities = await this.communityService.getAll()
 
-		let returned = {
+		const response: CoubsType = {
 			skip: take + skip,
-			take: array.length - take
+			queryNumber: queryNumber,
+			take: communities.length - take
 		}
 
-		const sortedArray = array.slice(skip, skip + take)
+		const communitiesSort = communities.slice(skip, skip + take)
 
-		if (sortedArray.length < 10) {
-			returned.skip = 10 - sortedArray.length
-			returned.take =
-				array.length - (10 - sortedArray.length) > 10
+		while (communitiesSort.length < 10) {
+			response.skip = 10 - communitiesSort.length
+			response.take =
+				communities.length - (10 - communitiesSort.length) > 10
 					? 10
-					: array.length - (10 - sortedArray.length)
+					: communities.length - (10 - communitiesSort.length)
 
-			sortedArray.push(...array.slice(0, 10 - sortedArray.length))
+			communitiesSort.push(...communities.slice(0, 10 - communitiesSort.length))
 		}
+
+		const coubs = await Promise.all(
+			communitiesSort.map(async (community, index) => {
+				if ((queryNumber + 1) * communities.length < index + 1) {
+					queryNumber += 1
+					response.queryNumber += 1
+				}
+				const coub = await this.prisma.coub.findFirst({
+					where: { communityId: community.id },
+					orderBy: {
+						views: 'desc'
+					},
+					skip: queryNumber,
+					take: 1,
+					include: {
+						community: true,
+						user: true,
+						likes: {
+							include: {
+								user: true
+							}
+						}
+					}
+				})
+				return coub
+			})
+		)
+
+		response.coubs = coubs
+
+		return response
+
+		// const array = [
+		// 	'1',
+		// 	'2',
+		// 	'3',
+		// 	'4',
+		// 	'5',
+		// 	'6',
+		// 	'7',
+		// 	'8',
+		// 	'9',
+		// 	'10',
+		// 	'11',
+		// 	'12'
+		// ]
+
+		// let returned = {
+		// 	skip: take + skip,
+		// 	take: array.length - take
+		// }
+
+		// const sortedArray = array.slice(skip, skip + take)
+
+		// if (sortedArray.length < 10) {
+		// 	returned.skip = 10 - sortedArray.length
+		// 	returned.take =
+		// 		array.length - (10 - sortedArray.length) > 10
+		// 			? 10
+		// 			: array.length - (10 - sortedArray.length)
+
+		// 	sortedArray.push(...array.slice(0, 10 - sortedArray.length))
+		// }
+
+		//----------------------------------------
 
 		// const communities = (await this.communityService.getAll()).slice(
 
@@ -103,6 +163,35 @@ export class CoubService {
 
 	async getById(id: string) {
 		return this.prisma.coub.findUnique({
+			where: {
+				id
+			}
+		})
+	}
+
+	async create(dto: CoubDto, videoUrl: string) {
+		return this.prisma.coub.create({
+			data: {
+				...dto,
+				url: videoUrl
+			}
+		})
+	}
+
+	async update(id: string, dto: CoubDto, videoUrl?: string) {
+		return this.prisma.coub.update({
+			where: {
+				id
+			},
+			data: {
+				...dto,
+				url: videoUrl ? videoUrl : undefined //test this
+			}
+		})
+	}
+
+	async delete(id: string) {
+		return this.prisma.coub.delete({
 			where: {
 				id
 			}
