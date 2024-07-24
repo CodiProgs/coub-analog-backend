@@ -5,10 +5,11 @@ import { GraphQLModule } from '@nestjs/graphql'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { join } from 'path'
 import { UserModule } from './user/user.module'
-import { LikeModule } from './like/like.module'
 import { AuthModule } from './auth/auth.module'
-import { CoubModule } from './coub/coub.module'
-import { CommunityModule } from './community/community.module'
+import { FileModule } from './file/file.module'
+import { CommunityModule } from './community/community.module';
+import { CoubModule } from './coub/coub.module';
+import { LikeModule } from './like/like.module';
 
 @Module({
 	imports: [
@@ -25,10 +26,11 @@ import { CommunityModule } from './community/community.module'
 		}),
 		ConfigModule.forRoot(),
 		UserModule,
-		LikeModule,
 		AuthModule,
+		FileModule,
+		CommunityModule,
 		CoubModule,
-		CommunityModule
+		LikeModule
 	]
 })
 export class AppModule {}

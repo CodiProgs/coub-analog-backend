@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common'
-import { CoubService } from './coub.service';
-import { CoubResolver } from './coub.resolver';
+import { CoubService } from './coub.service'
+import { CoubResolver } from './coub.resolver'
+import { PrismaService } from 'src/prisma.service'
+import { FileModule } from 'src/file/file.module'
+import { CommunityModule } from 'src/community/community.module'
 
 @Module({
-  providers: [CoubService, CoubResolver]
+	imports: [FileModule, CommunityModule],
+	providers: [CoubService, CoubResolver, PrismaService]
 })
 export class CoubModule {}

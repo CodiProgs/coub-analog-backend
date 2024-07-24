@@ -79,6 +79,13 @@ export class UserService {
 		})
 	}
 
+	async updateAvatar(id: string, avatar: string) {
+		return this.prisma.user.update({
+			where: { id },
+			data: { avatar }
+		})
+	}
+
 	async delete(id: string) {
 		return this.prisma.user.delete({
 			where: { id }

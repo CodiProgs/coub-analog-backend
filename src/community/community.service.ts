@@ -1,41 +1,54 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/prisma.service'
-import { CommunityType } from './type/community.type'
 import { CommunityDto } from './dto/community.dto'
 
 @Injectable()
 export class CommunityService {
-	constructor(private prismaService: PrismaService) {}
+	constructor(private prisma: PrismaService) {}
 
 	async getAll() {
-		return this.prismaService.community.findMany()
+		return this.prisma.community.findMany({
+			orderBy: {
+				name: 'asc'
+			}
+		})
 	}
 
-	async getById(id: string): Promise<CommunityType> {
-		return this.prismaService.community.findUnique({
+	async getById(id: string) {
+		return this.prisma.community.findUnique({
 			where: {
 				id
 			}
 		})
 	}
 
-	async create(dto: CommunityDto): Promise<CommunityType> {
-		return this.prismaService.community.create({
-			data: dto
+	async create(dto: CommunityDto, avatarPath: string) {
+		return this.prisma.community.create({
+			data: {
+				...dto,
+				avatar: avatarPath
+			}
 		})
 	}
 
-	async update(id: string, dto: CommunityDto): Promise<CommunityType> {
-		return this.prismaService.community.update({
+	async update(
+		id: string,
+		dto: Omit<CommunityDto, 'avatar'>,
+		avatarPath?: string
+	) {
+		return this.prisma.community.update({
 			where: {
 				id
 			},
-			data: dto
+			data: {
+				...dto,
+				avatar: avatarPath || undefined
+			}
 		})
 	}
 
-	async delete(id: string): Promise<CommunityType> {
-		return this.prismaService.community.delete({
+	async delete(id: string) {
+		return this.prisma.community.delete({
 			where: {
 				id
 			}

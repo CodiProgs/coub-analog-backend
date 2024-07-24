@@ -13,7 +13,6 @@ type AuthType {
 }
 
 input CommunityDto {
-  avatar: String!
   name: String!
 }
 
@@ -25,37 +24,44 @@ type CommunityType {
 
 type CoubType {
   community: CommunityType!
+  createdAt: DateTime!
   id: String!
-  likes: [LikeType!]
+  likes: [LikeType!]!
   title: String!
   url: String!
   user: UserType!
   views: Float!
 }
 
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type LikeType {
-  coub: CoubType!
+  coub: CoubType
   id: String!
   user: UserType!
 }
 
 type Mutation {
   auth(input: AuthDto!): AuthType!
-  createCommunity(input: CommunityDto!): CommunityType!
+  createCommunity(avatar: Upload!, input: CommunityDto!): CommunityType!
   deleteCommunity(id: String!): CommunityType!
   deleteUser: UserType!
   getNewToken: String!
   logout: Boolean!
-  updateCommunity(id: String!, input: CommunityDto!): CommunityType!
+  updateAvatar(avatar: Upload!): UserType!
+  updateCommunity(avatar: Upload, id: String!, input: CommunityDto!): CommunityType!
   updateEmail(email: String!): UserType!
   updatePassword(password: String!): UserType!
   updateUser(input: UserDto!): UserType!
-  uploadFile(file: Upload!): Boolean!
 }
 
 type Query {
   communities: [CommunityType!]!
-  community(id: String!): CommunityType
+  community: CommunityType!
+  coubs(skip: Float, take: Float): [CoubType]
   user(nickname: String!): UserType
 }
 

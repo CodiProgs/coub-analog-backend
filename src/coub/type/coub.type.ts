@@ -11,11 +11,13 @@ export class CoubType {
 
 	@Field() url: string
 
+	@Field() createdAt: Date
+
 	@Field() views: number
 
 	@Field(() => CommunityType) community: CommunityType
 
 	@Field(() => UserType) user: UserType
 
-	@Field(() => [LikeType], { nullable: true }) likes?: LikeType[]
+	@Field(() => [LikeType]) likes: LikeType[]
 }

@@ -8,5 +8,5 @@ export class LikeType {
 
 	@Field(() => UserType) user: UserType
 
-	@Field(() => CoubType) coub: CoubType
+	@Field(() => CoubType, { nullable: true }) coub?: CoubType
 }

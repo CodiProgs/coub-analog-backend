@@ -1,11 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql'
-import {
-	IsNotEmpty,
-	IsOptional,
-	IsString,
-	MaxLength,
-	MinLength
-} from 'class-validator'
+import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator'
 
 @InputType()
 export class CommunityDto {
@@ -15,9 +9,4 @@ export class CommunityDto {
 	@MinLength(3)
 	@MaxLength(20)
 	name: string
-
-	@Field()
-	@IsOptional()
-	@IsString()
-	avatar: string
 }

@@ -3,10 +3,15 @@ import { UserType } from './type/user.type'
 import { UserService } from './user.service'
 import { UserDto } from './dto/user.dto'
 import { Auth, CurrentUser } from 'src/auth/decorators'
+import { FileUpload, GraphQLUpload } from 'graphql-upload-ts'
+import { FileService } from 'src/file/file.service'
 
 @Resolver()
 export class UserResolver {
-	constructor(private userService: UserService) {}
+	constructor(
+		private userService: UserService,
+		private fileService: FileService
+	) {}
 
 	@Query(() => UserType, { nullable: true })
 	async user(@Args('nickname') nickname: string) {
@@ -35,6 +40,21 @@ export class UserResolver {
 		@Args('password') password: string
 	) {
 		return this.userService.updatePassword(id, password)
+	}
+
+	@Auth()
+	@Mutation(() => UserType)
+	async updateAvatar(
+		@CurrentUser('id') id: string,
+		@Args('avatar', { type: () => GraphQLUpload }) avatar: FileUpload
+	) {
+		const avatarPath = await this.fileService.saveFile(
+			avatar,
+			'avatars',
+			'image'
+		)
+
+		return this.userService.updateAvatar(id, avatarPath)
 	}
 
 	@Auth()
