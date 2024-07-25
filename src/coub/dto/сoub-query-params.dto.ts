@@ -7,17 +7,17 @@ export class CoubQueryParamsDto {
 	@Field({ nullable: true })
 	@IsOptional()
 	@IsNumber()
-	skip?: number
+	skipCommunities?: number
 
 	@Field({ nullable: true })
 	@IsOptional()
 	@IsNumber()
-	take?: number
+	takeCommunities?: number
 
 	@Field({ nullable: true })
 	@IsOptional()
 	@IsNumber()
-	queryNumber?: number
+	skipCoub?: number
 
 	@Field(() => TimePeriod, { nullable: true })
 	@IsOptional()

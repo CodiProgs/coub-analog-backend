@@ -3,11 +3,11 @@ import { CoubType } from './coub.type'
 
 @ObjectType()
 export class CoubResponseType {
-	@Field() skip: number
+	@Field() skipCommunities: number
 
-	@Field() take: number
+	@Field() takeCommunities: number
 
-	@Field() queryNumber: number
+	@Field() skipCoub: number
 
 	@Field(() => [CoubType], { nullable: 'itemsAndList' }) coubs?: CoubType[]
 }

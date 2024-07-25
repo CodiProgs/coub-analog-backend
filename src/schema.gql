@@ -30,17 +30,17 @@ input CoubDto {
 
 input CoubQueryParamsDto {
   orderBy: OrderBy
-  queryNumber: Float
-  skip: Float
-  take: Float
+  skipCommunities: Float
+  skipCoub: Float
+  takeCommunities: Float
   timePeriod: TimePeriod
 }
 
 type CoubResponseType {
   coubs: [CoubType]
-  queryNumber: Float!
-  skip: Float!
-  take: Float!
+  skipCommunities: Float!
+  skipCoub: Float!
+  takeCommunities: Float!
 }
 
 type CoubType {

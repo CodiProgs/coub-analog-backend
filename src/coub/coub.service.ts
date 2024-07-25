@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common'
-import { subDays } from 'date-fns'
-import { OrderBy, TimePeriod } from 'src/common/enums/enums'
 import { CommunityService } from 'src/community/community.service'
 import { PrismaService } from 'src/prisma.service'
 import { CoubDto } from './dto/coub.dto'
 import { CoubQueryParamsDto } from './dto/сoub-query-params.dto'
 import { CoubResponseType } from './type/coub-response.type'
+import { CoubType } from './type/coub.type'
 
 @Injectable()
 export class CoubService {
@@ -16,9 +15,9 @@ export class CoubService {
 
 	async getAll({
 		orderBy,
-		queryNumber,
-		skip,
-		take,
+		skipCoub = 0,
+		skipCommunities = 0,
+		takeCommunities = 10,
 		timePeriod
 	}: CoubQueryParamsDto): Promise<CoubResponseType> {
 		const communities = await this.communityService.getAll()
@@ -31,27 +30,65 @@ export class CoubService {
 		}
 
 		const response: CoubResponseType = {
-			skip: take + skip,
-			queryNumber: queryNumber,
-			take: communities.length - take
+			skipCommunities: takeCommunities + skipCommunities,
+			skipCoub,
+			takeCommunities: communities.length - takeCommunities
 		}
+
+		const coubs: CoubType[] = []
+		let index = 0
+
+		while (coubs.length < 10) {
+			const coubs2 = await this.prisma.coub.findMany({
+				where: {
+					communityId: communities[index].id
+				},
+				include: {
+					community: true,
+					user: true,
+					likes: {
+						include: {
+							user: true
+						}
+					}
+				},
+				orderBy: {
+					views: 'desc'
+				},
+				skip: skipCoub,
+				take: 1
+			})
+
+			if (coubs2[0] !== null) {
+				coubs.push(coubs2[0])
+				index++
+			}
+
+			if (index >= communities.length) {
+				index = 0
+				skipCoub += 1
+			}
+		}
+
 		// const response: CoubResponseType = {
 		// 	skip: skip + take,
 		// 	queryNumber,
 		// 	take: Math.min(communities.length - skip, take)
 		// }
 
-		const communitiesSort = communities.slice(skip, skip + take)
+		// const communitiesSort = communities.slice(skip, skip + take)
 
-		while (communitiesSort.length < 10) {
-			response.skip = 10 - communitiesSort.length
-			response.take =
-				communities.length - (10 - communitiesSort.length) > 10
-					? 10
-					: communities.length - (10 - communitiesSort.length)
+		// while (communitiesSort.length < 10) {
+		// 	response.skip = 10 - communitiesSort.length
+		// 	response.take =
+		// 		communities.length - (10 - communitiesSort.length) > 10
+		// 			? 10
+		// 			: communities.length - (10 - communitiesSort.length)
 
-			communitiesSort.push(...communities.slice(0, 10 - communitiesSort.length))
-		}
+		// 	communitiesSort.push(...communities.slice(0, 10 - communitiesSort.length))
+		// }
+
+		//----
 
 		// if (communitiesSort.length < 10) {
 		// 	const remaining = 10 - communitiesSort.length
@@ -61,40 +98,40 @@ export class CoubService {
 		// }
 
 		// можно делать promise не по массиву communitiesSort, а по -> while (coubs.length < 10)
-		const coubs = await Promise.all(
-			communitiesSort.map(async (community, index) => {
-				if ((response.queryNumber + 1) * communities.length < index + 1)
-					response.queryNumber += 1
+		// const coubs = await Promise.all(
+		// 	communitiesSort.map(async (community, index) => {
+		// 		if ((response.queryNumber + 1) * communities.length < index + 1)
+		// 			response.queryNumber += 1
 
-				return this.prisma.coub.findFirst({
-					where: {
-						communityId: community.id,
-						createdAt: {
-							gte:
-								timePeriod === TimePeriod.ALL
-									? undefined
-									: subDays(new Date(), timePeriods[timePeriod])
-						}
-					},
-					include: {
-						community: true,
-						user: true,
-						likes: {
-							include: {
-								user: true
-							}
-						}
-					},
-					skip: response.queryNumber,
-					take: 1,
-					orderBy: {
-						views: orderBy === OrderBy.VIEWS ? 'desc' : undefined,
-						createdAt: orderBy === OrderBy.CREATED_AT ? 'desc' : undefined,
-						likes: orderBy === OrderBy.LIKES ? { _count: 'desc' } : undefined
-					}
-				})
-			})
-		)
+		// 		return this.prisma.coub.findFirst({
+		// 			where: {
+		// 				communityId: community.id,
+		// 				createdAt: {
+		// 					gte:
+		// 						timePeriod === TimePeriod.ALL
+		// 							? undefined
+		// 							: subDays(new Date(), timePeriods[timePeriod])
+		// 				}
+		// 			},
+		// 			include: {
+		// 				community: true,
+		// 				user: true,
+		// 				likes: {
+		// 					include: {
+		// 						user: true
+		// 					}
+		// 				}
+		// 			},
+		// 			skip: response.queryNumber,
+		// 			take: 1,
+		// 			orderBy: {
+		// 				views: orderBy === OrderBy.VIEWS ? 'desc' : undefined,
+		// 				createdAt: orderBy === OrderBy.CREATED_AT ? 'desc' : undefined,
+		// 				likes: orderBy === OrderBy.LIKES ? { _count: 'desc' } : undefined
+		// 			}
+		// 		})
+		// 	})
+		// )
 
 		// coubs.filter((coub) => coub !== null)
 		response.coubs = coubs
