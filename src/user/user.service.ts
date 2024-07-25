@@ -3,8 +3,10 @@ import { Provider } from '@prisma/client'
 import { hash } from 'argon2'
 import { AuthSocialDto } from 'src/auth/dto/auth-social.dto'
 import { AuthDto } from 'src/auth/dto/auth.dto'
+import { OrderBy } from 'src/common/enums/enums'
 import { PrismaService } from 'src/prisma.service'
 import { v4 } from 'uuid'
+import { UserQueryParamsDto } from './dto/user-query-params.dto'
 import { UserDto } from './dto/user.dto'
 
 @Injectable()
@@ -29,17 +31,20 @@ export class UserService {
 		})
 	}
 
-	// add search params -> orderBy (createdAt {news, olds}, likes, views, random)
-	async getLikes(id: string) {
+	async getLikes(id: string, { orderBy, skip, take }: UserQueryParamsDto) {
 		const user = await this.prisma.user.findUnique({
 			where: { id },
 			include: {
 				likes: {
 					orderBy: {
 						coub: {
-							createdAt: 'desc'
+							views: orderBy === OrderBy.VIEWS ? 'desc' : undefined,
+							likes: orderBy === OrderBy.LIKES ? { _count: 'desc' } : undefined,
+							createdAt: orderBy === OrderBy.CREATED_AT ? 'desc' : undefined
 						}
 					},
+					skip,
+					take,
 					include: {
 						coub: {
 							include: {

@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common'
+import { subDays } from 'date-fns'
+import { OrderBy, TimePeriod } from 'src/common/enums/enums'
 import { CommunityService } from 'src/community/community.service'
 import { PrismaService } from 'src/prisma.service'
-import { CoubsType } from './type/coubs.type'
 import { CoubDto } from './dto/coub.dto'
+import { CoubQueryParamsDto } from './dto/сoub-query-params.dto'
+import { CoubResponseType } from './type/coub-response.type'
 
 @Injectable()
 export class CoubService {
@@ -11,21 +14,32 @@ export class CoubService {
 		private communityService: CommunityService
 	) {}
 
-	async getAll(
-		skip: number = 0,
-		take: number = 10,
-		queryNumber: number = 0
-		// timePeriod: 'day' | 'week' | 'month' | 'year' | 'all' = 'week',
-		// orderBy: 'createdAt' | 'likes' | 'views' = 'views'
-	): Promise<CoubsType> {
-		// вынести в отдельную функцию типа -> search
+	async getAll({
+		orderBy,
+		queryNumber,
+		skip,
+		take,
+		timePeriod
+	}: CoubQueryParamsDto): Promise<CoubResponseType> {
 		const communities = await this.communityService.getAll()
 
-		const response: CoubsType = {
+		const timePeriods = {
+			day: 1,
+			week: 7,
+			month: 30,
+			year: 365
+		}
+
+		const response: CoubResponseType = {
 			skip: take + skip,
 			queryNumber: queryNumber,
 			take: communities.length - take
 		}
+		// const response: CoubResponseType = {
+		// 	skip: skip + take,
+		// 	queryNumber,
+		// 	take: Math.min(communities.length - skip, take)
+		// }
 
 		const communitiesSort = communities.slice(skip, skip + take)
 
@@ -39,19 +53,29 @@ export class CoubService {
 			communitiesSort.push(...communities.slice(0, 10 - communitiesSort.length))
 		}
 
+		// if (communitiesSort.length < 10) {
+		// 	const remaining = 10 - communitiesSort.length
+		// 	response.skip += remaining
+		// 	response.take = Math.min(communities.length - response.skip, 10)
+		// 	communitiesSort.push(...communities.slice(0, remaining))
+		// }
+
+		// можно делать promise не по массиву communitiesSort, а по -> while (coubs.length < 10)
 		const coubs = await Promise.all(
 			communitiesSort.map(async (community, index) => {
-				if ((queryNumber + 1) * communities.length < index + 1) {
-					queryNumber += 1
+				if ((response.queryNumber + 1) * communities.length < index + 1)
 					response.queryNumber += 1
-				}
-				const coub = await this.prisma.coub.findFirst({
-					where: { communityId: community.id },
-					orderBy: {
-						views: 'desc'
+
+				return this.prisma.coub.findFirst({
+					where: {
+						communityId: community.id,
+						createdAt: {
+							gte:
+								timePeriod === TimePeriod.ALL
+									? undefined
+									: subDays(new Date(), timePeriods[timePeriod])
+						}
 					},
-					skip: queryNumber,
-					take: 1,
 					include: {
 						community: true,
 						user: true,
@@ -60,105 +84,22 @@ export class CoubService {
 								user: true
 							}
 						}
+					},
+					skip: response.queryNumber,
+					take: 1,
+					orderBy: {
+						views: orderBy === OrderBy.VIEWS ? 'desc' : undefined,
+						createdAt: orderBy === OrderBy.CREATED_AT ? 'desc' : undefined,
+						likes: orderBy === OrderBy.LIKES ? { _count: 'desc' } : undefined
 					}
 				})
-				return coub
 			})
 		)
 
+		// coubs.filter((coub) => coub !== null)
 		response.coubs = coubs
 
 		return response
-
-		// const array = [
-		// 	'1',
-		// 	'2',
-		// 	'3',
-		// 	'4',
-		// 	'5',
-		// 	'6',
-		// 	'7',
-		// 	'8',
-		// 	'9',
-		// 	'10',
-		// 	'11',
-		// 	'12'
-		// ]
-
-		// let returned = {
-		// 	skip: take + skip,
-		// 	take: array.length - take
-		// }
-
-		// const sortedArray = array.slice(skip, skip + take)
-
-		// if (sortedArray.length < 10) {
-		// 	returned.skip = 10 - sortedArray.length
-		// 	returned.take =
-		// 		array.length - (10 - sortedArray.length) > 10
-		// 			? 10
-		// 			: array.length - (10 - sortedArray.length)
-
-		// 	sortedArray.push(...array.slice(0, 10 - sortedArray.length))
-		// }
-
-		//----------------------------------------
-
-		// const communities = (await this.communityService.getAll()).slice(
-
-		// )
-
-		// const coubs = await Promise.all(
-		// 	communities.map(async community => {
-		// 		const coub = await this.prisma.coub.findFirst({
-		// 			where: { communityId: community.id },
-		// 			orderBy: {
-		// 				views: 'desc'
-		// 			},
-		// 			include: {
-		// 				community: true,
-		// 				user: true,
-		// 				likes: {
-		// 					include: {
-		// 						user: true
-		// 					}
-		// 				}
-		// 			}
-		// 		})
-		// 		return coub
-		// 	})
-		// )
-
-		// return coubs
-
-		// -------
-
-		// orderBy: 'createdAt' | 'likes' | 'views' = 'createdAt'
-		// получить все категории кубов
-		// const categories = await this.prisma.category.findMany()
-		// const mostViewedVideos = await Promise.all(
-		// 	categories.map(async category => {
-		// 		const videos = await this.prisma.video.findMany({
-		// 			where: { categoryId: category.id },
-		// 			orderBy: { views: 'desc' },
-		// 			take: 1
-		// 		})
-		// 		return videos[0]
-		// 	})
-		// )
-		// return mostViewedVideos
-		// ---
-		//  const mostViewedVideos = await Promise.all(
-		// 		categories.map(async category => {
-		// 			const videos = await this.prisma.video.findMany({
-		// 				where: { categoryId: category.id },
-		// 				orderBy: { views: 'desc' },
-		// 				skip: page - 1,
-		// 				take: 1
-		// 			})
-		// 			return videos[0]
-		// 		})
-		// 	)
 	}
 
 	async getById(id: string) {

@@ -1,11 +1,12 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
-import { CoubService } from './coub.service'
-import { CoubsType } from './type/coubs.type'
-import { CoubType } from './type/coub.type'
-import { Auth } from 'src/auth/decorators'
-import { CoubDto } from './dto/coub.dto'
 import { FileUpload, GraphQLUpload } from 'graphql-upload-ts'
+import { Auth } from 'src/auth/decorators'
 import { FileService } from 'src/file/file.service'
+import { CoubService } from './coub.service'
+import { CoubDto } from './dto/coub.dto'
+import { CoubQueryParamsDto } from './dto/сoub-query-params.dto'
+import { CoubResponseType } from './type/coub-response.type'
+import { CoubType } from './type/coub.type'
 
 @Resolver()
 export class CoubResolver {
@@ -14,13 +15,9 @@ export class CoubResolver {
 		private fileService: FileService
 	) {}
 
-	@Query(() => CoubsType)
-	async coubs(
-		@Args('skip', { nullable: true }) skip: number,
-		@Args('take', { nullable: true }) take: number,
-		@Args('queryNumber', { nullable: true }) queryNumber: number
-	) {
-		return this.coubService.getAll(skip, take, queryNumber)
+	@Query(() => CoubResponseType)
+	async coubs(@Args('queryParams') dto: CoubQueryParamsDto) {
+		return this.coubService.getAll(dto)
 	}
 
 	@Query(() => CoubType, { nullable: true })

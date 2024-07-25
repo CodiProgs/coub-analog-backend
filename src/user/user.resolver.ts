@@ -1,10 +1,11 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
+import { FileUpload, GraphQLUpload } from 'graphql-upload-ts'
+import { Auth, CurrentUser } from 'src/auth/decorators'
+import { FileService } from 'src/file/file.service'
+import { UserQueryParamsDto } from './dto/user-query-params.dto'
+import { UserDto } from './dto/user.dto'
 import { UserType } from './type/user.type'
 import { UserService } from './user.service'
-import { UserDto } from './dto/user.dto'
-import { Auth, CurrentUser } from 'src/auth/decorators'
-import { FileUpload, GraphQLUpload } from 'graphql-upload-ts'
-import { FileService } from 'src/file/file.service'
 
 @Resolver()
 export class UserResolver {
@@ -20,8 +21,11 @@ export class UserResolver {
 
 	@Auth()
 	@Query(() => UserType, { nullable: true })
-	async likes(@CurrentUser('id') id: string) {
-		return this.userService.getLikes(id)
+	async likes(
+		@Args('queryParams') dto: UserQueryParamsDto,
+		@CurrentUser('id') id: string
+	) {
+		return this.userService.getLikes(id, dto)
 	}
 
 	@Auth()
