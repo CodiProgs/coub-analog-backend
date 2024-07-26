@@ -1,6 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql'
-import { IsEnum, IsNumber, IsOptional } from 'class-validator'
-import { OrderBy, TimePeriod } from 'src/common/enums/enums'
+import { IsNumber, IsOptional } from 'class-validator'
 
 @InputType()
 export class CoubQueryParamsDto {
@@ -17,15 +16,5 @@ export class CoubQueryParamsDto {
 	@Field({ nullable: true })
 	@IsOptional()
 	@IsNumber()
-	skipCoub?: number
-
-	@Field(() => TimePeriod, { nullable: true })
-	@IsOptional()
-	@IsEnum(TimePeriod)
-	timePeriod?: TimePeriod
-
-	@Field(() => OrderBy, { nullable: true })
-	@IsOptional()
-	@IsEnum(OrderBy)
-	orderBy?: OrderBy
+	skipCoubs?: number
 }

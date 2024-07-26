@@ -29,18 +29,20 @@ input CoubDto {
 }
 
 input CoubQueryParamsDto {
-  orderBy: OrderBy
   skipCommunities: Float
-  skipCoub: Float
+  skipCoubs: Float
   takeCommunities: Float
-  timePeriod: TimePeriod
+}
+
+type CoubQueryParamsType {
+  skipCommunities: Float!
+  skipCoubs: Float!
+  takeCommunities: Float!
 }
 
 type CoubResponseType {
   coubs: [CoubType]
-  skipCommunities: Float!
-  skipCoub: Float!
-  takeCommunities: Float!
+  queryParams: CoubQueryParamsType!
 }
 
 type CoubType {
@@ -97,15 +99,6 @@ type Query {
   coubs(queryParams: CoubQueryParamsDto!): CoubResponseType!
   likes(queryParams: UserQueryParamsDto!): UserType
   user(nickname: String!): UserType
-}
-
-"""Time period for filtering"""
-enum TimePeriod {
-  ALL
-  DAY
-  MONTH
-  WEEK
-  YEAR
 }
 
 """The `Upload` scalar type represents a file upload."""

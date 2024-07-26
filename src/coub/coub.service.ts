@@ -13,33 +13,26 @@ export class CoubService {
 		private communityService: CommunityService
 	) {}
 
+	// add orderBy and timePeriod
+	// mb remove takeCommunities?
 	async getAll({
-		orderBy,
-		skipCoub = 0,
 		skipCommunities = 0,
 		takeCommunities = 10,
-		timePeriod
+		skipCoubs = 0
 	}: CoubQueryParamsDto): Promise<CoubResponseType> {
-		const communities = await this.communityService.getAll()
-
-		const timePeriods = {
-			day: 1,
-			week: 7,
-			month: 30,
-			year: 365
-		}
-
-		const response: CoubResponseType = {
-			skipCommunities: takeCommunities + skipCommunities,
-			skipCoub,
-			takeCommunities: communities.length - takeCommunities
-		}
+		const { communities, queryParams } =
+			await this.communityService.getPaginatedCommunities(
+				skipCommunities,
+				takeCommunities,
+				skipCoubs
+			)
 
 		const coubs: CoubType[] = []
 		let index = 0
+		let totalAttempts = 0
 
 		while (coubs.length < 10) {
-			const coubs2 = await this.prisma.coub.findMany({
+			const coub = await this.prisma.coub.findFirst({
 				where: {
 					communityId: communities[index].id
 				},
@@ -52,22 +45,41 @@ export class CoubService {
 						}
 					}
 				},
+				skip: queryParams.skipCoubs,
 				orderBy: {
 					views: 'desc'
-				},
-				skip: skipCoub,
-				take: 1
+				}
 			})
 
-			if (coubs2[0] !== null) {
-				coubs.push(coubs2[0])
-				index++
-			}
+			if (coub) {
+				coubs.push(coub)
+				totalAttempts = 0
+			} else totalAttempts++
+			queryParams.skipCommunities += 1
+			if (totalAttempts >= communities.length) break
 
-			if (index >= communities.length) {
-				index = 0
-				skipCoub += 1
+			index++
+			if (index === takeCommunities - 1) {
+				queryParams.skipCoubs++
+				// queryParams.skipCommunities = 0
 			}
+			if (index === communities.length) {
+				index = 0
+				if (takeCommunities === 10) queryParams.skipCoubs++
+				queryParams.skipCommunities = 0
+			}
+		}
+
+		queryParams.skipCommunities =
+			communities.length - queryParams.takeCommunities > 0
+				? 0
+				: queryParams.skipCommunities
+		queryParams.takeCommunities =
+			communities.length - queryParams.skipCommunities
+
+		return {
+			coubs,
+			queryParams
 		}
 
 		// const response: CoubResponseType = {
@@ -134,9 +146,9 @@ export class CoubService {
 		// )
 
 		// coubs.filter((coub) => coub !== null)
-		response.coubs = coubs
+		// response.coubs = coubs
 
-		return response
+		// return response
 	}
 
 	async getById(id: string) {
