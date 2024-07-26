@@ -36,11 +36,17 @@ export class UserService {
 			where: { id },
 			include: {
 				likes: {
+					// TODO: вынести в функцию?
 					orderBy: {
 						coub: {
 							views: orderBy === OrderBy.VIEWS ? 'desc' : undefined,
 							likes: orderBy === OrderBy.LIKES ? { _count: 'desc' } : undefined,
-							createdAt: orderBy === OrderBy.CREATED_AT ? 'desc' : undefined
+							createdAt:
+								orderBy === OrderBy.News
+									? 'asc'
+									: OrderBy.Olds
+										? 'desc'
+										: undefined
 						}
 					},
 					skip,
@@ -49,6 +55,7 @@ export class UserService {
 						coub: {
 							include: {
 								community: true,
+								user: true,
 								likes: {
 									include: {
 										user: true

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { CoubQueryParamsDto } from 'src/coub/dto/сoub-query-params.dto'
 import { PrismaService } from 'src/prisma.service'
 import { CommunityDto } from './dto/community.dto'
 
@@ -25,33 +26,36 @@ export class CommunityService {
 		})
 	}
 
-	// add dto CoubQueryParamsDto
-	async getPaginatedCommunities(skip: number, take: number, skipCoubs: number) {
-		const communities = await this.getAll()
-		const communitiesSorted = communities
-			.filter(comm => comm.coubs.length > skipCoubs)
-			.slice(skip, skip + take)
+	async getPaginatedCommunities({
+		skipCommunities: skip,
+		skipCoubs,
+		takeCoubs
+	}: CoubQueryParamsDto) {
+		const communities = (await this.getAll()).filter(
+			comm => comm.coubs.length >= skipCoubs
+		)
 
-		if (communitiesSorted.length < communities.length) {
-			skip = communities.length - communitiesSorted.length
-			take = communities.length - skip
+		const communitiesSorted = communities.slice(skip, takeCoubs + skip)
 
+		if (skip !== 0) {
 			communitiesSorted.push(
 				...communities
-					.slice(0, 10 - communitiesSorted.length)
 					.filter(comm => !communitiesSorted.includes(comm))
-					.filter(comm => comm.coubs.length > 0)
+					.slice(0, takeCoubs - communitiesSorted.length)
 			)
-		} else {
-			skip = take
-			take = communities.length - take
+		}
+
+		let newSkip = ((takeCoubs % communities.length) + skip) % communities.length
+
+		if (newSkip === communities.length) {
+			skip = 0
+			newSkip = 0
 		}
 
 		return {
 			communities: communitiesSorted,
 			queryParams: {
-				skipCommunities: skip,
-				takeCommunities: take,
+				skipCommunities: newSkip,
 				skipCoubs
 			}
 		}
@@ -77,7 +81,7 @@ export class CommunityService {
 			},
 			data: {
 				...dto,
-				avatar: avatarPath || undefined // check this so that the avatar is not replaced
+				avatar: avatarPath || undefined //TODO: check this so that the avatar is not replaced
 			}
 		})
 	}

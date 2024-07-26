@@ -1,10 +1,10 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
-import { CommunityService } from './community.service'
-import { FileService } from 'src/file/file.service'
-import { CommunityType } from './type/community.type'
-import { Auth } from 'src/auth/decorators'
-import { CommunityDto } from './dto/community.dto'
 import { FileUpload, GraphQLUpload } from 'graphql-upload-ts'
+import { Auth } from 'src/auth/decorators'
+import { FileService } from 'src/file/file.service'
+import { CommunityService } from './community.service'
+import { CommunityDto } from './dto/community.dto'
+import { CommunityType } from './type/community.type'
 
 @Resolver()
 export class CommunityResolver {
@@ -19,8 +19,8 @@ export class CommunityResolver {
 	}
 
 	@Auth('ADMIN')
-	@Query(() => CommunityType)
-	async community(id: string) {
+	@Query(() => CommunityType, { nullable: true })
+	async community(@Args('id') id: string) {
 		return this.communityService.getById(id)
 	}
 

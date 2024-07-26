@@ -6,8 +6,5 @@ export class CoubQueryParamsType {
 	skipCommunities: number
 
 	@Field()
-	takeCommunities: number
-
-	@Field()
 	skipCoubs: number
 }

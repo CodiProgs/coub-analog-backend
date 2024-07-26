@@ -22,7 +22,7 @@ export class UserResolver {
 	@Auth()
 	@Query(() => UserType, { nullable: true })
 	async likes(
-		@Args('queryParams') dto: UserQueryParamsDto,
+		@Args('queryParams', { nullable: true }) dto: UserQueryParamsDto,
 		@CurrentUser('id') id: string
 	) {
 		return this.userService.getLikes(id, dto)

@@ -1,4 +1,7 @@
 import { Injectable } from '@nestjs/common'
+import { subDays } from 'date-fns'
+import { TIME_PERIODS_IN_DAYS } from 'src/common/constants/constants'
+import { OrderBy, TimePeriod } from 'src/common/enums/enums'
 import { CommunityService } from 'src/community/community.service'
 import { PrismaService } from 'src/prisma.service'
 import { CoubDto } from './dto/coub.dto'
@@ -13,28 +16,34 @@ export class CoubService {
 		private communityService: CommunityService
 	) {}
 
-	// add orderBy and timePeriod
-	// mb remove takeCommunities?
 	async getAll({
-		skipCommunities = 0,
-		takeCommunities = 10,
-		skipCoubs = 0
+		skipCommunities,
+		skipCoubs,
+		takeCoubs,
+		orderBy,
+		timePeriod
 	}: CoubQueryParamsDto): Promise<CoubResponseType> {
 		const { communities, queryParams } =
-			await this.communityService.getPaginatedCommunities(
+			await this.communityService.getPaginatedCommunities({
 				skipCommunities,
-				takeCommunities,
-				skipCoubs
-			)
+				skipCoubs,
+				takeCoubs
+			})
 
 		const coubs: CoubType[] = []
 		let index = 0
 		let totalAttempts = 0
 
-		while (coubs.length < 10) {
+		while (coubs.length < takeCoubs) {
 			const coub = await this.prisma.coub.findFirst({
 				where: {
-					communityId: communities[index].id
+					communityId: communities[index].id,
+					createdAt: {
+						gte:
+							timePeriod === TimePeriod.ALL
+								? undefined
+								: subDays(new Date(), TIME_PERIODS_IN_DAYS[timePeriod])
+					}
 				},
 				include: {
 					community: true,
@@ -46,8 +55,16 @@ export class CoubService {
 					}
 				},
 				skip: queryParams.skipCoubs,
+				// TODO: вынести в функцию?
 				orderBy: {
-					views: 'desc'
+					views: orderBy === OrderBy.VIEWS ? 'desc' : undefined,
+					createdAt:
+						orderBy === OrderBy.News
+							? 'asc'
+							: orderBy === OrderBy.Olds
+								? 'desc'
+								: undefined,
+					likes: orderBy === OrderBy.LIKES ? { _count: 'desc' } : undefined
 				}
 			})
 
@@ -55,100 +72,22 @@ export class CoubService {
 				coubs.push(coub)
 				totalAttempts = 0
 			} else totalAttempts++
-			queryParams.skipCommunities += 1
+
 			if (totalAttempts >= communities.length) break
 
 			index++
-			if (index === takeCommunities - 1) {
+			if (index === communities.length - skipCommunities) {
 				queryParams.skipCoubs++
-				// queryParams.skipCommunities = 0
 			}
 			if (index === communities.length) {
 				index = 0
-				if (takeCommunities === 10) queryParams.skipCoubs++
-				queryParams.skipCommunities = 0
 			}
 		}
-
-		queryParams.skipCommunities =
-			communities.length - queryParams.takeCommunities > 0
-				? 0
-				: queryParams.skipCommunities
-		queryParams.takeCommunities =
-			communities.length - queryParams.skipCommunities
 
 		return {
 			coubs,
 			queryParams
 		}
-
-		// const response: CoubResponseType = {
-		// 	skip: skip + take,
-		// 	queryNumber,
-		// 	take: Math.min(communities.length - skip, take)
-		// }
-
-		// const communitiesSort = communities.slice(skip, skip + take)
-
-		// while (communitiesSort.length < 10) {
-		// 	response.skip = 10 - communitiesSort.length
-		// 	response.take =
-		// 		communities.length - (10 - communitiesSort.length) > 10
-		// 			? 10
-		// 			: communities.length - (10 - communitiesSort.length)
-
-		// 	communitiesSort.push(...communities.slice(0, 10 - communitiesSort.length))
-		// }
-
-		//----
-
-		// if (communitiesSort.length < 10) {
-		// 	const remaining = 10 - communitiesSort.length
-		// 	response.skip += remaining
-		// 	response.take = Math.min(communities.length - response.skip, 10)
-		// 	communitiesSort.push(...communities.slice(0, remaining))
-		// }
-
-		// можно делать promise не по массиву communitiesSort, а по -> while (coubs.length < 10)
-		// const coubs = await Promise.all(
-		// 	communitiesSort.map(async (community, index) => {
-		// 		if ((response.queryNumber + 1) * communities.length < index + 1)
-		// 			response.queryNumber += 1
-
-		// 		return this.prisma.coub.findFirst({
-		// 			where: {
-		// 				communityId: community.id,
-		// 				createdAt: {
-		// 					gte:
-		// 						timePeriod === TimePeriod.ALL
-		// 							? undefined
-		// 							: subDays(new Date(), timePeriods[timePeriod])
-		// 				}
-		// 			},
-		// 			include: {
-		// 				community: true,
-		// 				user: true,
-		// 				likes: {
-		// 					include: {
-		// 						user: true
-		// 					}
-		// 				}
-		// 			},
-		// 			skip: response.queryNumber,
-		// 			take: 1,
-		// 			orderBy: {
-		// 				views: orderBy === OrderBy.VIEWS ? 'desc' : undefined,
-		// 				createdAt: orderBy === OrderBy.CREATED_AT ? 'desc' : undefined,
-		// 				likes: orderBy === OrderBy.LIKES ? { _count: 'desc' } : undefined
-		// 			}
-		// 		})
-		// 	})
-		// )
-
-		// coubs.filter((coub) => coub !== null)
-		// response.coubs = coubs
-
-		// return response
 	}
 
 	async getById(id: string) {
@@ -175,7 +114,7 @@ export class CoubService {
 			},
 			data: {
 				...dto,
-				url: videoUrl ? videoUrl : undefined //test this
+				url: videoUrl ? videoUrl : undefined //TODO: test this
 			}
 		})
 	}

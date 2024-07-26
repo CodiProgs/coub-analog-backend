@@ -9,7 +9,8 @@ export enum TimePeriod {
 }
 
 export enum OrderBy {
-	CREATED_AT = 'createdAt',
+	News = 'news',
+	Olds = 'olds',
 	LIKES = 'likes',
 	VIEWS = 'views'
 }

@@ -29,15 +29,16 @@ input CoubDto {
 }
 
 input CoubQueryParamsDto {
-  skipCommunities: Float
-  skipCoubs: Float
-  takeCommunities: Float
+  orderBy: OrderBy = VIEWS
+  skipCommunities: Float = 0
+  skipCoubs: Float = 0
+  takeCoubs: Float = 10
+  timePeriod: TimePeriod = WEEK
 }
 
 type CoubQueryParamsType {
   skipCommunities: Float!
   skipCoubs: Float!
-  takeCommunities: Float!
 }
 
 type CoubResponseType {
@@ -87,18 +88,28 @@ type Mutation {
 
 """Sorting criteria"""
 enum OrderBy {
-  CREATED_AT
   LIKES
+  News
+  Olds
   VIEWS
 }
 
 type Query {
   communities: [CommunityType!]!
-  community: CommunityType!
+  community(id: String!): CommunityType
   coub(id: String!): CoubType
   coubs(queryParams: CoubQueryParamsDto!): CoubResponseType!
-  likes(queryParams: UserQueryParamsDto!): UserType
+  likes(queryParams: UserQueryParamsDto): UserType
   user(nickname: String!): UserType
+}
+
+"""Time period for filtering"""
+enum TimePeriod {
+  ALL
+  DAY
+  MONTH
+  WEEK
+  YEAR
 }
 
 """The `Upload` scalar type represents a file upload."""

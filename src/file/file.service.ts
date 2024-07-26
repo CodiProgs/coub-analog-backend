@@ -46,6 +46,7 @@ export class FileService {
 
 	async deleteFile(filePath: string) {
 		const fullPath = join('uploads', filePath)
+
 		try {
 			await access(fullPath)
 			await unlink(fullPath)
